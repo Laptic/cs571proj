@@ -15,7 +15,7 @@ func scheduler(dagMatrix [][]*dag.Vertex, dag *dag.DAG, ms Master, fileInput str
 	numSourceNodes := len(dag.SourceVertices())
 
 	if numSourceNodes > 1 {
-		listOfSourceFiles := splitChunks(fileInput, "schedulerInput", "00", numSourceNodes)
+		listOfSourceFiles := splitChunks_experiment(fileInput, "schedulerInput", "00", numSourceNodes)
 
 		for _, file := range listOfSourceFiles {
 			ms.files <- file
@@ -162,8 +162,8 @@ func performAction_experiment(vertexCommand *dag.Vertex, ms Master, numParent in
 	var listofFiles []string
 	if !(numChild == 0 || numChild == 1) {
 
-		listofFiles = splitChunks(filename, commandList[0], vertexCommand.ID, numChild)
-		//listofFiles = splitChunks_experiment(filename, commandList[0], vertexCommand.ID, numChild)
+		//listofFiles = splitChunks(filename, commandList[0], vertexCommand.ID, numChild)
+		listofFiles = splitChunks_experiment(filename, commandList[0], vertexCommand.ID, numChild)
 		for i := 0; i < len(listofFiles); i++ {
 			ms.files <- listofFiles[i]
 		}

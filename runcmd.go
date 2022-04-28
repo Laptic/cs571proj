@@ -139,7 +139,7 @@ func splitChunks_experiment(filename string, commandString string, idPos string,
 	listOfText := []string{}
 	totalChunks := 0
 	listofFiles := []string{}
-
+	oldFilename := ""
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 
@@ -153,6 +153,7 @@ func splitChunks_experiment(filename string, commandString string, idPos string,
 
 			//fileName := "./filestore/somebigfile_" + strconv.FormatInt(int64(currentFile), 10)
 			fileName := "./filestore/chunks-" + commandString + "_" + idPos + "_" + strconv.Itoa(r1.Intn(1000000)) + ".txt"
+			oldFilename = fileName
 			listofFiles = append(listofFiles, fileName)
 			filePtr, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 
@@ -175,7 +176,7 @@ func splitChunks_experiment(filename string, commandString string, idPos string,
 		}
 	}
 
-	fileName := "./filestore/somebigfile_" + strconv.FormatInt(int64(currentFile), 10)
+	fileName := oldFilename
 	filePtr, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 
 	for _, text := range listOfText {
