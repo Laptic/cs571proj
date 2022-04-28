@@ -124,6 +124,7 @@ func splitChunks_experiment(filename string, commandString string, idPos string,
 	}
 
 	scanner := bufio.NewScanner(file)
+	fmt.Println("Counting lines now")
 	// optionally, resize scanner's capacity for lines over 64K, see next example
 	numlines := lineCounter(filename)
 	sizeofChunks := int64(numlines) / int64(numChunks)
@@ -175,6 +176,7 @@ func splitChunks_experiment(filename string, commandString string, idPos string,
 			totalChunks += 1
 		}
 	}
+	fmt.Println("Finished splitting part 1")
 
 	fileName := oldFilename
 	filePtr, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -190,7 +192,7 @@ func splitChunks_experiment(filename string, commandString string, idPos string,
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Println("Finished splitting part 2")
 	file.Close()
 
 	return listofFiles
