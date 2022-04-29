@@ -1,0 +1,1 @@
+sed "s//fillintext" %s, grep "fillintext" %s, uniq -c %s, awk "{print $1}" %s
