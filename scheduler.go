@@ -149,13 +149,17 @@ func performAction_experiment(vertexCommand *dag.Vertex, ms Master, numParent in
 		//we do NOT want to place this file in the channel, it is to be used to merge
 		//different files (look at the lines after the else statement) and run a different command only
 		fileMerge := mergeFiles(listofFilesToMerge, commandList[0])
+		fmt.Println("Running Command multi" + vertexCommand.Value.(string))
 		filename = ms.RunCommand_experiment(strings.Trim(vertexCommand.Value.(string), " "), fileMerge)
+		fmt.Println("Finished running Command multi" + vertexCommand.Value.(string))
 		fmt.Println(filename)
 	} else {
 		file := <-ms.files
 		//we do NOT want to place this file in the channel, it is to be used to merge
 		//different files (look at the lines after the else statement) and run a different command only
+		fmt.Println("Running Command single" + vertexCommand.Value.(string))
 		filename = ms.RunCommand_experiment(strings.Trim(vertexCommand.Value.(string), " "), file)
+		fmt.Println("Finished running Command single" + vertexCommand.Value.(string))
 		fmt.Println(filename)
 	}
 

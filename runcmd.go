@@ -70,6 +70,51 @@ func check(e error) {
 	}
 }
 
+func splitChunks_v3(filename string, commandString string, idPos string, chunks int) []string {
+
+	split := chunks
+
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	texts := make([]string, 0)
+	fmt.Println("Reading in text")
+	for scanner.Scan() {
+		text := scanner.Text()
+		texts = append(texts, text)
+	}
+	fmt.Println("Finished reading text")
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	var listofFileMade []string
+
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	fmt.Println("Splitting files")
+	lengthPerSplit := len(texts) / split
+	for i := 0; i < split; i++ {
+		if i+1 == split {
+			chunkTexts := texts[i*lengthPerSplit:]
+			filename := writefile(strings.Join(chunkTexts, "\n"), commandString, idPos, r1.Intn(1000000))
+			listofFileMade = append(listofFileMade, filename)
+		} else {
+			chunkTexts := texts[i*lengthPerSplit : (i+1)*lengthPerSplit]
+			filename := writefile(strings.Join(chunkTexts, "\n"), commandString, idPos, r1.Intn(1000000))
+			listofFileMade = append(listofFileMade, filename)
+		}
+	}
+	fmt.Println("finished splitting files")
+	texts = nil
+
+	return listofFileMade
+}
+
 func splitChunks(filename string, commandString string, idPos string, chunks int) []string {
 
 	split := chunks
