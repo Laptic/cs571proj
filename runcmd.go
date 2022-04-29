@@ -82,10 +82,12 @@ func splitChunks(filename string, commandString string, idPos string, chunks int
 
 	scanner := bufio.NewScanner(file)
 	texts := make([]string, 0)
+	fmt.Println("Reading in text")
 	for scanner.Scan() {
 		text := scanner.Text()
 		texts = append(texts, text)
 	}
+	fmt.Println("Finished reading text")
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
@@ -94,7 +96,7 @@ func splitChunks(filename string, commandString string, idPos string, chunks int
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-
+	fmt.Println("Splitting files")
 	lengthPerSplit := len(texts) / split
 	for i := 0; i < split; i++ {
 		if i+1 == split {
@@ -107,6 +109,8 @@ func splitChunks(filename string, commandString string, idPos string, chunks int
 			listofFileMade = append(listofFileMade, filename)
 		}
 	}
+	fmt.Println("finished splitting files")
+	texts = nil
 
 	return listofFileMade
 }
