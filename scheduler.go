@@ -17,7 +17,7 @@ func scheduler(dagMatrix [][]*dag.Vertex, dag *dag.DAG, ms Master, fileInput str
 	fmt.Println("Starting splitting")
 
 	if numSourceNodes > 1 {
-		listOfSourceFiles := splitChunks_experiment(fileInput, "schedulerInput", "00", numSourceNodes)
+		listOfSourceFiles := splitChunks(fileInput, "schedulerInput", "00", numSourceNodes)
 
 		for _, file := range listOfSourceFiles {
 			ms.files <- file
@@ -56,9 +56,9 @@ func scheduler(dagMatrix [][]*dag.Vertex, dag *dag.DAG, ms Master, fileInput str
 
 	}
 
-	//fmt.Println(len(ms.files))
+	fmt.Println("finished")
 	close(ms.files)
-	ms.merge()
+	//ms.merge()
 	//////////////////////////////
 
 	// performAction(dagMatrix[0][0], ms, 1)
