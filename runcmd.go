@@ -70,7 +70,7 @@ func check(e error) {
 	}
 }
 
-func splitChunks_v3(filename string, commandString string, idPos string, chunks int) []string {
+func splitChunks(filename string, commandString string, idPos string, chunks int) []string {
 
 	split := chunks
 
@@ -115,7 +115,7 @@ func splitChunks_v3(filename string, commandString string, idPos string, chunks 
 	return listofFileMade
 }
 
-func splitChunks(filename string, commandString string, idPos string, chunks int) []string {
+func splitChunks_v3(filename string, commandString string, idPos string, chunks int) []string {
 
 	split := chunks
 
@@ -146,11 +146,11 @@ func splitChunks(filename string, commandString string, idPos string, chunks int
 	for i := 0; i < split; i++ {
 		if i+1 == split {
 			chunkTexts := texts[i*lengthPerSplit:]
-			filename := writefile(strings.Join(chunkTexts, "\n"), commandString, idPos, r1.Intn(1000000))
+			filename := writefilev2(chunkTexts, commandString, idPos, r1.Intn(1000000))
 			listofFileMade = append(listofFileMade, filename)
 		} else {
 			chunkTexts := texts[i*lengthPerSplit : (i+1)*lengthPerSplit]
-			filename := writefile(strings.Join(chunkTexts, "\n"), commandString, idPos, r1.Intn(1000000))
+			filename := writefilev2(chunkTexts, commandString, idPos, r1.Intn(1000000))
 			listofFileMade = append(listofFileMade, filename)
 		}
 	}
@@ -332,6 +332,22 @@ func splitChunks_experiment(filename string, commandString string, idPos string,
 	file.Close()
 
 	return listofFiles
+}
+
+func writefilev2(data []string, commandString string, idPos string, uniqueid int) string {
+
+	file, err := os.Create("./filestore/chunks-" + commandString + "_" + idPos + "_" + strconv.Itoa(uniqueid) + ".txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	for i := 0; i < len(data); i++ {
+		file.WriteString(data[i])
+	}
+	file.WriteString("\n")
+
+	return file.Name()
 }
 
 func writefile(data string, commandString string, idPos string, uniqueid int) string {
