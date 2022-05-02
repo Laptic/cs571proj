@@ -2,13 +2,87 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/goombaio/dag"
 )
 
 var wgOne sync.WaitGroup
+
+func schedulerTimed(dagMatrix [][]*dag.Vertex, dag *dag.DAG, ms Master, fileInput string) {
+
+	//!!!!!!!!!!!!!!!!!!!!
+	startTimeScheduler := time.Now()
+
+	numSourceNodes := len(dag.SourceVertices())
+
+	fmt.Println("Starting splitting")
+
+	if numSourceNodes > 1 {
+
+		//!!!!!!!!!!!!!!!!!!!!
+		startInitialSplit := time.Now()
+		listOfSourceFiles := splitChunksTimed(fileInput, "schedulerInput", "00", numSourceNodes)
+		//!!!!!!!!!!!!!!!!!!!!
+		duration := time.Since(startInitialSplit)
+		logTimenotes("Inital Splitting finished in ..."+duration.String(), "logtime.txt")
+		for _, file := range listOfSourceFiles {
+			ms.files <- file
+		}
+	} else {
+		ms.files <- fileInput
+	}
+
+	fmt.Println("Ending splitting")
+	//////////////////////////////
+
+	////////////////////////////
+	for i := 0; i < len(dagMatrix); i++ {
+		count := 0
+
+		//!!!!!!!!!!!!!!!!!!!!
+		rowstarttime := time.Now()
+
+		for j := 0; j < len(dagMatrix[i]); j++ {
+
+			//fmt.Println(dagCommand[i][j])
+
+			if dagMatrix[i][j] == nil {
+				continue
+			}
+
+			wgOne.Add(1)
+			// fmt.Println(dagMatrix[i][j].OutDegree())
+			// fmt.Println(dagMatrix[i][j].InDegree())
+
+			//go performAction(dagMatrix[i][j], ms, dagMatrix[i][j].InDegree(), dagMatrix[i][j].OutDegree())
+			go performAction_experimentTimed(dagMatrix[i][j], ms, dagMatrix[i][j].InDegree(), dagMatrix[i][j].OutDegree())
+			count += 1
+		}
+
+		//waitOne would hold the number of elements in a row
+		//that way we wait until all those elements in a row are done
+		//fmt.Println("Done waiting in this section")
+		wgOne.Wait()
+
+		//!!!!!!!!!!!!!!!!!!!!
+		duration := time.Since(rowstarttime)
+		logTimenotes("ROW FINISHED RUNNING ITS THREADS IN..."+duration.String(), "logtime.txt")
+
+	}
+
+	fmt.Println("finished")
+	close(ms.files)
+	//!!!!!!!!!!!!!!!!!!!!
+	duration := time.Since(startTimeScheduler)
+	logTimenotes("Scheduler finished in ..."+duration.String(), "logtime.txt")
+	//ms.merge()
+	//////////////////////////////
+
+}
 
 func scheduler(dagMatrix [][]*dag.Vertex, dag *dag.DAG, ms Master, fileInput string) {
 
@@ -17,6 +91,7 @@ func scheduler(dagMatrix [][]*dag.Vertex, dag *dag.DAG, ms Master, fileInput str
 	fmt.Println("Starting splitting")
 
 	if numSourceNodes > 1 {
+
 		listOfSourceFiles := splitChunks(fileInput, "schedulerInput", "00", numSourceNodes)
 
 		for _, file := range listOfSourceFiles {
@@ -58,29 +133,18 @@ func scheduler(dagMatrix [][]*dag.Vertex, dag *dag.DAG, ms Master, fileInput str
 
 	fmt.Println("finished")
 	close(ms.files)
+
 	//ms.merge()
 	//////////////////////////////
 
-	// performAction(dagMatrix[0][0], ms, 1)
-	// wgOne.Add(1)
-	// go performAction(nil, ms, 2)
-
-	//wgOne.Wait()
-	// fmt.Println("WE ARE DONE")
-	//waitTwo where the value of wait is the total number of of commands
-
 }
 
-func performAction(vertexCommand *dag.Vertex, ms Master, numParent int, numChild int) {
+func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numParent int, numChild int) {
 	//fmt.Println(vertexCommand)
 
-	fmt.Println(vertexCommand.Value)
+	//!!!!!!!!!!!!!!
+	startPerformAction := time.Now()
 	commandList := strings.Split(vertexCommand.Value.(string), " ")
-	fmt.Println(commandList)
-	value := commandList[1]
-	if commandList[0] == "awk" {
-		value = commandList[1][1:] + " " + commandList[2][:len(commandList[2])-1]
-	}
 
 	//assume numInput can be greater than 1
 	//so we will need to keep that in mind
@@ -97,23 +161,54 @@ func performAction(vertexCommand *dag.Vertex, ms Master, numParent int, numChild
 		//here we merge the files and place it in filename
 		//we do NOT want to place this file in the channel, it is to be used to merge
 		//different files (look at the lines after the else statement) and run a different command only
+
+		//!!!!!!!!!!!!!!
+		startfileMerge := time.Now()
 		fileMerge := mergeFiles(listofFilesToMerge, commandList[0])
-		filename = ms.RunCommand(commandList[0], value, fileMerge)
+		//!!!!!!!!!!!!!!
+		duration := time.Since(startfileMerge)
+		logTimenotes("Time for MERGING files: "+fileMerge+" == "+duration.String()+" to be finished...", "logtime.txt")
+
+		//!!!!!!!!!!!!!!
+		startRunCommand := time.Now()
+
+		fmt.Println("Running Command multi" + vertexCommand.Value.(string))
+		filename = ms.RunCommand_experiment(strings.Trim(vertexCommand.Value.(string), " "), fileMerge)
+		fmt.Println("Finished RUNNING Command multi " + filename)
+
+		//!!!!!!!!!!!!!!
+		duration = time.Since(startRunCommand)
+		logTimenotes("Time for RUNNING command on MERGED file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
+
 	} else {
 		file := <-ms.files
 		//we do NOT want to place this file in the channel, it is to be used to merge
 		//different files (look at the lines after the else statement) and run a different command only
-		filename = ms.RunCommand(commandList[0], value, file)
+
+		//!!!!!!!!!!!!!!
+		startsingleParent := time.Now()
+
+		fmt.Println("Running Command single" + vertexCommand.Value.(string))
+		filename = ms.RunCommand_experiment(strings.Trim(vertexCommand.Value.(string), " "), file)
+		fmt.Println("Finished RUNNING Command single" + vertexCommand.Value.(string))
+
+		//!!!!!!!!!!!!!!
+		duration := time.Since(startsingleParent)
+		logTimenotes("Time for RUNNING command on a SINGLE file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
 	}
 
 	// the list of files grabbed from if numParent > 1 should then be merged
+
+	//!!!!!!!!!!!!!!
+	finalsplitstarttime := time.Now()
 
 	// ms.files <- filename
 	var listofFiles []string
 	if !(numChild == 0 || numChild == 1) {
 
-		listofFiles = splitChunks(filename, commandList[0], vertexCommand.ID, numChild)
-
+		//listofFiles = splitChunks(filename, commandList[0], vertexCommand.ID, numChild)
+		listofFiles = splitChunksTimed(filename, commandList[0], vertexCommand.ID, numChild)
+		//listofFiles = splitChunks_experiment(filename, commandList[0], vertexCommand.ID, numChild)
 		for i := 0; i < len(listofFiles); i++ {
 			ms.files <- listofFiles[i]
 		}
@@ -121,8 +216,16 @@ func performAction(vertexCommand *dag.Vertex, ms Master, numParent int, numChild
 		ms.files <- filename
 	}
 
+	//!!!!!!!!!!!!!!
+	duration := time.Since(finalsplitstarttime)
+	logTimenotes("Time for SPLITTING files into chunks for file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
+
 	//fmt.Println(commandList)
 	//ms.RunCommand()
+
+	//!!!!!!!!!!!!!!
+	duration = time.Since(startPerformAction)
+	logTimenotes("Time for (PerformAction function finishing) FUNCTION AND FILE:"+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
 
 	wgOne.Done()
 }
@@ -130,7 +233,6 @@ func performAction(vertexCommand *dag.Vertex, ms Master, numParent int, numChild
 func performAction_experiment(vertexCommand *dag.Vertex, ms Master, numParent int, numChild int) {
 	//fmt.Println(vertexCommand)
 
-	fmt.Println(vertexCommand.Value.(string))
 	commandList := strings.Split(vertexCommand.Value.(string), " ")
 
 	//assume numInput can be greater than 1
@@ -148,19 +250,22 @@ func performAction_experiment(vertexCommand *dag.Vertex, ms Master, numParent in
 		//here we merge the files and place it in filename
 		//we do NOT want to place this file in the channel, it is to be used to merge
 		//different files (look at the lines after the else statement) and run a different command only
+
 		fileMerge := mergeFiles(listofFilesToMerge, commandList[0])
+
 		fmt.Println("Running Command multi" + vertexCommand.Value.(string))
 		filename = ms.RunCommand_experiment(strings.Trim(vertexCommand.Value.(string), " "), fileMerge)
 		fmt.Println("Finished running Command multi" + vertexCommand.Value.(string))
-		fmt.Println(filename)
+
 	} else {
 		file := <-ms.files
 		//we do NOT want to place this file in the channel, it is to be used to merge
 		//different files (look at the lines after the else statement) and run a different command only
+
 		fmt.Println("Running Command single" + vertexCommand.Value.(string))
 		filename = ms.RunCommand_experiment(strings.Trim(vertexCommand.Value.(string), " "), file)
 		fmt.Println("Finished running Command single" + vertexCommand.Value.(string))
-		fmt.Println(filename)
+
 	}
 
 	// the list of files grabbed from if numParent > 1 should then be merged
@@ -178,9 +283,17 @@ func performAction_experiment(vertexCommand *dag.Vertex, ms Master, numParent in
 	} else {
 		ms.files <- filename
 	}
-
 	//fmt.Println(commandList)
 	//ms.RunCommand()
 
 	wgOne.Done()
+}
+
+func logTimenotes(text string, file string) {
+
+	f, err := os.OpenFile("./filestore/"+file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	newtext := text + "\n\n"
+	f.WriteString(newtext)
+	check(err)
+	f.Close()
 }

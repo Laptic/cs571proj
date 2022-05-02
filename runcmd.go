@@ -115,7 +115,7 @@ func splitChunks(filename string, commandString string, idPos string, chunks int
 	return listofFileMade
 }
 
-func splitChunks_v3(filename string, commandString string, idPos string, chunks int) []string {
+func splitChunksTimed(filename string, commandString string, idPos string, chunks int) []string {
 
 	split := chunks
 
@@ -127,12 +127,21 @@ func splitChunks_v3(filename string, commandString string, idPos string, chunks 
 
 	scanner := bufio.NewScanner(file)
 	texts := make([]string, 0)
+
+	//!!!!!!!!!!!!!!!!!!!!!!!!!
+	readInTextStart := time.Now()
+
 	fmt.Println("Reading in text")
 	for scanner.Scan() {
 		text := scanner.Text()
 		texts = append(texts, text)
 	}
 	fmt.Println("Finished reading text")
+
+	//!!!!!!!!!!!!!!!!!!!!
+	duration := time.Since(readInTextStart)
+	logTimenotes("Finished Reading text (SPLITCHUNKS) in "+filename+"=="+duration.String(), "logtime.txt")
+
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
@@ -141,213 +150,32 @@ func splitChunks_v3(filename string, commandString string, idPos string, chunks 
 
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
+
+	//!!!!!!!!!!!!!!!!!!!!!!!!!
+	splitTime := time.Now()
+
 	fmt.Println("Splitting files")
 	lengthPerSplit := len(texts) / split
 	for i := 0; i < split; i++ {
 		if i+1 == split {
 			chunkTexts := texts[i*lengthPerSplit:]
-			filename := writefilev2(chunkTexts, commandString, idPos, r1.Intn(1000000))
+			filename := writefile(strings.Join(chunkTexts, "\n"), commandString, idPos, r1.Intn(1000000))
 			listofFileMade = append(listofFileMade, filename)
 		} else {
 			chunkTexts := texts[i*lengthPerSplit : (i+1)*lengthPerSplit]
-			filename := writefilev2(chunkTexts, commandString, idPos, r1.Intn(1000000))
+			filename := writefile(strings.Join(chunkTexts, "\n"), commandString, idPos, r1.Intn(1000000))
 			listofFileMade = append(listofFileMade, filename)
 		}
 	}
+
+	//!!!!!!!!!!!!!!!!!!!!
+	duration = time.Since(splitTime)
+	logTimenotes("Finished assigning text to split files (SPLITCHUNKS) in "+filename+"=="+duration.String(), "logtime.txt")
+
 	fmt.Println("finished splitting files")
 	texts = nil
 
 	return listofFileMade
-}
-
-func splitChunks_experimentv2(filename string, commandString string, idPos string, numChunks int) []string {
-
-	file, err := os.Open(filename)
-
-	stats, err := file.Stat()
-
-	fileSize := stats.Size()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	scanner := bufio.NewScanner(file)
-	fmt.Println("Counting lines now")
-	// optionally, resize scanner's capacity for lines over 64K, see next example
-	numlines := lineCounter(filename)
-	sizeofChunks := int64(numlines) / int64(numChunks)
-
-	fmt.Println("sizeofFile")
-	fmt.Println(fileSize)
-	fmt.Println("Size of chunks")
-	fmt.Println(sizeofChunks)
-	fmt.Println("-----")
-
-	currentFile := 0
-	numLines := 0
-	listOfText := []string{}
-	totalChunks := 0
-	listofFiles := []string{}
-	oldFilename := ""
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-
-	for scanner.Scan() {
-		linetext := scanner.Text()
-		numLines += 1
-		//fmt.Println(numLines)
-		listOfText = append(listOfText, linetext)
-
-		if numLines >= int(sizeofChunks) && totalChunks != (int(sizeofChunks)-1) {
-
-			//fileName := "./filestore/somebigfile_" + strconv.FormatInt(int64(currentFile), 10)
-			fileName := "./filestore/chunks-" + commandString + "_" + idPos + "_" + strconv.Itoa(r1.Intn(1000000)) + ".txt"
-			oldFilename = fileName
-			listofFiles = append(listofFiles, fileName)
-			filePtr, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-
-			if err != nil {
-				fmt.Println(err)
-				panic(err)
-			}
-
-			for _, text := range listOfText {
-				_, err := filePtr.WriteString(text + "\n")
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			filePtr.Close()
-			numLines = 0
-			currentFile += 1
-			listOfText = nil
-			totalChunks += 1
-		}
-	}
-	fmt.Println("Finished splitting part 1")
-
-	fileName := oldFilename
-	filePtr, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-
-	for _, text := range listOfText {
-		_, err := filePtr.WriteString(text + "\n")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	filePtr.Close()
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Finished splitting part 2")
-	file.Close()
-
-	return listofFiles
-}
-
-func splitChunks_experiment(filename string, commandString string, idPos string, numChunks int) []string {
-
-	file, err := os.Open(filename)
-
-	stats, err := file.Stat()
-
-	fileSize := stats.Size()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	scanner := bufio.NewScanner(file)
-	fmt.Println("Counting lines now")
-	// optionally, resize scanner's capacity for lines over 64K, see next example
-	numlines := lineCounter(filename)
-	sizeofChunks := int64(numlines) / int64(numChunks)
-
-	fmt.Println("sizeofFile")
-	fmt.Println(fileSize)
-	fmt.Println("Size of chunks")
-	fmt.Println(sizeofChunks)
-	fmt.Println("-----")
-
-	currentFile := 0
-	numLines := 0
-	listOfText := []string{}
-	totalChunks := 0
-	listofFiles := []string{}
-	oldFilename := ""
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-
-	for scanner.Scan() {
-		linetext := scanner.Text()
-		numLines += 1
-		//fmt.Println(numLines)
-		listOfText = append(listOfText, linetext)
-
-		if numLines >= int(sizeofChunks) && totalChunks != (int(sizeofChunks)-1) {
-
-			//fileName := "./filestore/somebigfile_" + strconv.FormatInt(int64(currentFile), 10)
-			fileName := "./filestore/chunks-" + commandString + "_" + idPos + "_" + strconv.Itoa(r1.Intn(1000000)) + ".txt"
-			oldFilename = fileName
-			listofFiles = append(listofFiles, fileName)
-			filePtr, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-
-			if err != nil {
-				fmt.Println(err)
-				panic(err)
-			}
-
-			for _, text := range listOfText {
-				_, err := filePtr.WriteString(text + "\n")
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			filePtr.Close()
-			numLines = 0
-			currentFile += 1
-			listOfText = nil
-			totalChunks += 1
-		}
-	}
-	fmt.Println("Finished splitting part 1")
-
-	fileName := oldFilename
-	filePtr, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-
-	for _, text := range listOfText {
-		_, err := filePtr.WriteString(text + "\n")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	filePtr.Close()
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Finished splitting part 2")
-	file.Close()
-
-	return listofFiles
-}
-
-func writefilev2(data []string, commandString string, idPos string, uniqueid int) string {
-
-	file, err := os.Create("./filestore/chunks-" + commandString + "_" + idPos + "_" + strconv.Itoa(uniqueid) + ".txt")
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer file.Close()
-
-	for i := 0; i < len(data); i++ {
-		file.WriteString(data[i])
-	}
-	file.WriteString("\n")
-
-	return file.Name()
 }
 
 func writefile(data string, commandString string, idPos string, uniqueid int) string {

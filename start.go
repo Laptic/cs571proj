@@ -14,22 +14,6 @@ func main() {
 
 	start()
 
-	//count := lineCounter("./amazonData/train.csv")
-	//fmt.Println(count)
-	//expFiles("pgfrank.txt", 3)
-	//expFiles("sample.txt", 3)
-	//expFiles("./amazonData/train.csv", 3)
-	// commands, _ := readFile("./myinput/dag_input4.txt")
-	// //fmt.Println(commands)
-	// //data := PerformCommmand_experiment(commands[0], "pg-frankenstein.txt")
-	// //writeToFile(data, "./filestore/exper1.txt")
-	// data := PerformCommmand_experiment(commands[0], "pgfrank.txt")
-	// writeToFile(data, "./filestore/exper1.txt")
-
-	// cmd := exec.Command("awk", "/mili/ {print}", "pg-frankenstein.txt")
-	// data, _ := cmd.Output()
-	// writeToFile(data, "./filestore/something.txt")
-
 }
 
 func split_file_experiment(filename string, numChunks int) {
@@ -138,17 +122,9 @@ func start() {
 
 	// fmt.Println(matrix)
 	master := Master{make(chan string, 100)}
-	//scheduler(matrix, dag1, master, "./amazonData/test.csv")
-	scheduler(matrix, dag1, master, dagText)
-	//duration := time.Since(start)
-	//fmt.Println(duration)
-	////////////////////
-	// var files []string = []string{"./myinput/a.txt", "./myinput/b.txt", "./myinput/c.txt"}
-	// mergeFiles(files, "grep")
 
-	// //sourceverts := dag1.SourceVertices()
-	// fmt.Println(dag1)
-	//printDag(dag1, sourceverts)
-	//RunCommmand("sed", "s/unix/linux/", "./myinput/input1.txt")
-	//master.RunCommand("sed", "s/unix/linux/", "./myinput/input1.txt")
+	//can pick between two schedulers for time or not
+	scheduler(matrix, dag1, master, dagText)
+	//schedulerTimed(matrix, dag1, master, dagText)
+
 }
