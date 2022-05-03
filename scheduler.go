@@ -178,7 +178,7 @@ func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numPare
 
 		//!!!!!!!!!!!!!!
 		duration = time.Since(startRunCommand)
-		logTimenotes("Time for RUNNING command on MERGED file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
+		logTimenotes("Time for RUNNING command on MERGED file: "+" mergefile: "+fileMerge+" outputfile: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
 
 	} else {
 		file := <-ms.files
