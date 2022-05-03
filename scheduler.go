@@ -168,7 +168,7 @@ func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numPare
 		fileMerge := mergeFiles(listofFilesToMerge, commandList[0])
 		//!!!!!!!!!!!!!!
 		duration := time.Since(startfileMerge)
-		logTimenotes("Time: "+sizeofFile(fileMerge)+" : for MERGING files: "+fileMerge+" == "+duration.String()+" to be finished...", "logtime.txt")
+		logTimenotes("Num parents : "+strconv.FormatInt(int64(numParent), 10)+" Num child: "+strconv.FormatInt(int64(numChild), 10)+" Time: "+sizeofFile(fileMerge)+" : for MERGING files: "+fileMerge+" == "+duration.String()+" to be finished...", "logtime.txt")
 
 		//!!!!!!!!!!!!!!
 		startRunCommand := time.Now()
@@ -179,7 +179,7 @@ func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numPare
 
 		//!!!!!!!!!!!!!!
 		duration = time.Since(startRunCommand)
-		logTimenotes("Time: "+sizeofFile(filename)+" : RUNNING command on MERGED file: "+" mergefile: "+fileMerge+" outputfile: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
+		logTimenotes("Num parents : "+strconv.FormatInt(int64(numParent), 10)+" Num child: "+strconv.FormatInt(int64(numChild), 10)+" Time: "+sizeofFile(filename)+" : RUNNING command on MERGED file: "+" mergefile: "+fileMerge+" outputfile: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
 
 	} else {
 		file := <-ms.files
@@ -195,7 +195,7 @@ func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numPare
 
 		//!!!!!!!!!!!!!!
 		duration := time.Since(startsingleParent)
-		logTimenotes("Time: "+sizeofFile(filename)+" :Time for RUNNING command on a SINGLE file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
+		logTimenotes("Num parents : "+strconv.FormatInt(int64(numParent), 10)+" Num child: "+strconv.FormatInt(int64(numChild), 10)+" Time: "+sizeofFile(filename)+" :Time for RUNNING command on a SINGLE file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
 	}
 
 	// the list of files grabbed from if numParent > 1 should then be merged
