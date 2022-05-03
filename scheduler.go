@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -167,7 +168,7 @@ func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numPare
 		fileMerge := mergeFiles(listofFilesToMerge, commandList[0])
 		//!!!!!!!!!!!!!!
 		duration := time.Since(startfileMerge)
-		logTimenotes("Time for MERGING files: "+fileMerge+" == "+duration.String()+" to be finished...", "logtime.txt")
+		logTimenotes("Time: "+sizeofFile(fileMerge)+" : for MERGING files: "+fileMerge+" == "+duration.String()+" to be finished...", "logtime.txt")
 
 		//!!!!!!!!!!!!!!
 		startRunCommand := time.Now()
@@ -178,7 +179,7 @@ func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numPare
 
 		//!!!!!!!!!!!!!!
 		duration = time.Since(startRunCommand)
-		logTimenotes("Time for RUNNING command on MERGED file: "+" mergefile: "+fileMerge+" outputfile: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
+		logTimenotes("Time: "+sizeofFile(filename)+" : RUNNING command on MERGED file: "+" mergefile: "+fileMerge+" outputfile: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
 
 	} else {
 		file := <-ms.files
@@ -194,7 +195,7 @@ func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numPare
 
 		//!!!!!!!!!!!!!!
 		duration := time.Since(startsingleParent)
-		logTimenotes("Time for RUNNING command on a SINGLE file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
+		logTimenotes("Time: "+sizeofFile(filename)+" :Time for RUNNING command on a SINGLE file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
 	}
 
 	// the list of files grabbed from if numParent > 1 should then be merged
@@ -218,7 +219,7 @@ func performAction_experimentTimed(vertexCommand *dag.Vertex, ms Master, numPare
 
 	//!!!!!!!!!!!!!!
 	duration := time.Since(finalsplitstarttime)
-	logTimenotes("Time for SPLITTING files into chunks for file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
+	logTimenotes("Time: "+sizeofFile(filename)+" : for SPLITTING files into chunks for file: "+filename+" == "+duration.String()+" to be finished...", "logtime.txt")
 
 	//fmt.Println(commandList)
 	//ms.RunCommand()
@@ -296,4 +297,17 @@ func logTimenotes(text string, file string) {
 	f.WriteString(newtext)
 	check(err)
 	f.Close()
+}
+
+func sizeofFile(filename string) string {
+
+	fi, err := os.Stat(filename)
+	if err != nil {
+		panic(err)
+	}
+	// get the size
+	size := fi.Size()
+	s1 := strconv.FormatInt(int64(size), 10)
+
+	return s1
 }
